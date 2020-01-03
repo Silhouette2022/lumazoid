@@ -16,6 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+
 #include "Lumazoid.h"
 #include <Adafruit_NeoPixel.h>
 #include <avr/pgmspace.h>
@@ -53,9 +55,10 @@
 
 #define PATTERN_BUTTON_PIN 2
 #define COLOR_BUTTON_PIN 3
-#define LED_PIN 5
+#define LED_PIN 13
 #define LED_STRIP_PIN 6
 #define PARM_POT 1
+#define BACKGROUND            ((uint32_t) 0xD05000) //background color
 
 uint8_t N_LEDS = 120;
 uint8_t MAX_AGE = 0;
@@ -95,7 +98,7 @@ complex_t     bfly_buff[FFT_N];  // FFT "butterfly" buffer
 uint16_t      spectrum[FFT_N / 2]; // Spectrum output buffer
 
 volatile byte samplePos = 0;     // Buffer position counter
-byte maxBrightness = 255;
+byte maxBrightness = 200; //255;
 float brightnessScale = 1.0;
 
 byte
@@ -127,7 +130,6 @@ const uint8_t PROGMEM band5weights[] = {2, 9, 29, 70, 125, 172, 185, 162, 118, 7
 const uint8_t PROGMEM band6weights[] = {1, 4, 11, 25, 49, 83, 121, 156, 180, 185, 174, 149, 118, 87, 60, 40, 25, 16, 10, 6, 4, 2, 1, 1, 1};
 const uint8_t PROGMEM band7weights[] = {1, 2, 5, 10, 18, 30, 46, 67, 92, 118, 143, 164, 179, 185, 184, 174, 158, 139, 118, 97, 77, 60, 45, 34, 25, 18, 13, 9, 7, 5, 3, 2, 2, 1, 1, 1, 1};
 const uint8_t PROGMEM * const bandWeights[] = {band0weights, band1weights, band2weights, band3weights, band4weights, band5weights, band6weights, band7weights};
-
 
 void setup() {
   randomSeed(analogRead(2));
@@ -438,12 +440,16 @@ void doVisualization() {
   uint32_t color;
   uint8_t r;
 
+  bool Silence = true;
+
   // Bright peaks emanating from center moving outward.
   if ((pattern == PATTERN_DANCE_PARTY) ||
       (pattern == PATTERN_SINGLE_DIR_DANCE_PARTY)) {
 
     for (i = 0; i < N_PEAKS; i++) {
       if (peaks[i].magnitude > 0) {
+
+        Silence = false;
         // peak is visually active
 
         // The age of the visual peak will be used to determine brightness.
@@ -500,6 +506,13 @@ void doVisualization() {
         }
       }
     }
+
+    if (Silence)
+    {
+      for (i = 0; i < N_LEDS; i++)
+        strip.setPixelColor(i, BACKGROUND);
+    }
+    
     return;
   }
 
@@ -567,6 +580,9 @@ void doVisualization() {
     uint32_t color;
     float ageScale;
     if (peaks[peakIndex].magnitude > 0) {
+
+      Silence = false;
+      
       if (peaks[peakIndex].age == 0) {
         byte baseColor = peaks[peakIndex].baseColor;
         // Since the light bar is so bright, scale down the max brightness
@@ -621,6 +637,13 @@ void doVisualization() {
         peaks[peakIndex].magnitude = 0;
       }
     }
+
+    if (Silence)
+    {
+      for (i = 0; i < N_LEDS; i++)
+        strip.setPixelColor(i, BACKGROUND);
+    }
+    
     return;
   }
 
@@ -642,6 +665,10 @@ void doVisualization() {
       nbars = nbars / 2;
     }
     for (i = 0; i < N_PEAKS; i++) {
+
+      if ((peaks[i].magnitude > 0))
+        Silence = false;
+      
       if ((peaks[i].magnitude > 0) && (peaks[i].age == 0)) {
         // New peak (age == 0).
         // Find an unused color bar.
@@ -732,6 +759,12 @@ void doVisualization() {
       }
     }
 
+    if (Silence)
+    {
+      for (i = 0; i < N_LEDS; i++)
+        strip.setPixelColor(i, BACKGROUND);
+    }
+
     return;
   }
 
@@ -739,6 +772,9 @@ void doVisualization() {
     uint8_t pos, width;
     for (i = 0; i < N_PEAKS; i++) {
       if (peaks[i].magnitude > 0) {
+
+        Silence = false;
+        
         if (peaks[i].age == 0) {
           // If peak is brand new, make it max brightness!
           ageScale = 1.0;
@@ -777,6 +813,13 @@ void doVisualization() {
         }
       }
     }
+
+    if (Silence)
+    {
+      for (i = 0; i < N_LEDS; i++)
+        strip.setPixelColor(i, BACKGROUND);
+    }
+    
     return;
   }
 
