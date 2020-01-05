@@ -30,16 +30,17 @@
 #define N_BANDS 8
 #define N_FRAMES 5
 #define N_PEAKS 25
-#define N_MODES 9
-#define PATTERN_DANCE_PARTY 0
-#define PATTERN_SINGLE_DIR_DANCE_PARTY 1
-#define PATTERN_PULSE 2
-#define PATTERN_LIGHT_BAR 3
-#define PATTERN_COLOR_BARS 4
-#define PATTERN_COLOR_BARS2 5
-#define PATTERN_FLASHBULBS 6
-#define PATTERN_FIREFLIES 7
-#define PATTERN_RANDOM 8
+#define N_MODES 10
+#define PATTERN_BACKGROUND 0
+#define PATTERN_DANCE_PARTY 1
+#define PATTERN_SINGLE_DIR_DANCE_PARTY 2
+#define PATTERN_PULSE 3
+#define PATTERN_LIGHT_BAR 4
+#define PATTERN_COLOR_BARS 5
+#define PATTERN_COLOR_BARS2 6
+#define PATTERN_FLASHBULBS 7
+#define PATTERN_FIREFLIES 8
+#define PATTERN_RANDOM 9
 #define COLOR_RANDOM 0
 #define COLOR_CYCLE 1
 #define COLOR_BAND 2
@@ -58,7 +59,7 @@
 #define LED_PIN 13
 #define LED_STRIP_PIN 6
 #define PARM_POT 1
-#define BACKGROUND            ((uint32_t) 0xD05000) //background color
+#define BACKGROUND            ((uint32_t) 0x805000) //background color
 
 uint8_t N_LEDS = 120;
 uint8_t MAX_AGE = 0;
@@ -823,6 +824,12 @@ void doVisualization() {
     return;
   }
 
+  if (pattern == PATTERN_BACKGROUND)
+  {
+    for (i = 0; i < N_LEDS; i++)
+      strip.setPixelColor(i, BACKGROUND);
+  }
+
 }
 
 void reset() {
@@ -840,7 +847,9 @@ void reset() {
 void setADCFreeRunning() {
   samplePos = 0; // Reset sample counter
   // Init ADC free-run mode; f = ( 16MHz/prescaler ) / 13 cycles/conversion
+  // 00 AREF, 01 AVcc с конденсатором на AREF, 10 Резерв, 11 Внутренний 1.1В источник конденсатором на AREF
   ADMUX  = ADC_CHANNEL; // Channel sel, right-adj, use AREF pin
+
   // Start a conversion. We want to discard the first conversion after
   // changing the voltage reference reference.
   ADCSRB = 0;
@@ -909,7 +918,7 @@ uint8_t chooseRandomPattern() {
     p = random(PATTERN_RANDOM);
     found = true; // assume we've chosen a pattern we haven't used recently
     for (i = 0; i < 3; i++) {
-      if (p == recentPatterns[i]) {
+      if (p == recentPatterns[i] || p == PATTERN_BACKGROUND) {
         // we used this pattern recently, so try again
         found = false;
         break;
